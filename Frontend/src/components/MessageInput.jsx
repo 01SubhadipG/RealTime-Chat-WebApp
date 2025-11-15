@@ -1,16 +1,14 @@
 import { useRef, useState } from "react";
-import ReactDOM from "react-dom"; // 1. Import ReactDOM for portals
+import ReactDOM from "react-dom";
 import { useChatStore } from "../Store/useChatStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
-import UserDetail from "./UserDetail"; // 2. Import the new component
+import UserDetail from "./UserDetail";
 
 const MessageInput = () => {
     const [text, setText] = useState("");
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
-
-    // 3. Get the new state and actions from the store
     const { sendMessage, isDetailOpen, closeDetailPanel, selectedUser } = useChatStore();
 
     const handleImageChange = (e) => {
@@ -41,13 +39,15 @@ const MessageInput = () => {
     };
 
     return (
-        // 4. Use a fragment to wrap the existing component and the portal
         <>
             <div className="p-4 w-full">
                 {imagePreview && (
                     <div className="mb-3">
                         <div className="relative w-20 h-20">
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                            
+                            {/* --- Code Added Here --- */}
+                            
                             <button
                                 onClick={removeImage}
                                 className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
@@ -57,6 +57,7 @@ const MessageInput = () => {
                             </button>
                         </div>
                     </div>
+                    
                 )}
 
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
@@ -89,10 +90,9 @@ const MessageInput = () => {
                 </form>
             </div>
 
-            {/* 5. Portal for the User Detail panel */}
             {isDetailOpen && ReactDOM.createPortal(
                 <UserDetail user={selectedUser} onClose={closeDetailPanel} />,
-                document.body // This renders the panel directly in the <body> tag
+                document.body
             )}
         </>
     );

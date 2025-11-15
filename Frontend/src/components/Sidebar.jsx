@@ -49,7 +49,7 @@ const Sidebar = () => {
                         </div>
                         <div className="hidden lg:block text-left min-w-0">
                             {/* HERE: This renders the user's name */}
-                            <div className="font-medium truncate">{user.fullName}</div>
+                            <div className="font-medium truncate">{selectedUser?.username}</div>
                             <div className="text-sm text-base-content/70">
                                 {/* This check is also safe now */}
                                 {/* HERE: This renders the "Online" or "Offline" status text */}

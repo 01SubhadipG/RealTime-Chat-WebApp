@@ -44,11 +44,11 @@ const UserDetail = ({ user, onClose }) => {
                 <div className="flex flex-col items-center justify-center gap-4 p-6 border-b border-base-300">
                     <div className="avatar">
                         <div className="w-24 rounded-full relative ring ring-primary ring-offset-base-100 ring-offset-2">
-                            <img src={user.profilePic || "/avatar.png"} alt={user.fullName} />
+                            <img src={user.profilePic || "/avatar.png"} alt={user?.username} />
                         </div>
                     </div>
                     <div className="text-center">
-                        <h3 className="text-xl font-semibold">{user.fullName}</h3>
+                        <h3 className="text-xl font-semibold">{user?.username}</h3>
                         <p className={`text-sm ${isOnline ? "text-green-500" : "text-base-content/70"}`}>
                             {isOnline ? "Online" : "Offline"}
                         </p>
