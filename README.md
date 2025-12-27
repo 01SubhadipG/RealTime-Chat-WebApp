@@ -45,3 +45,45 @@ Scalable full-stack architecture with the MERN stack.
 Cloud-based media upload & storage with Cloudinary.
 
 Best practices in state management, authentication, and data persistence.
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/01SubhadipG/RealTime-Chat-WebApp.git](https://github.com/01SubhadipG/RealTime-Chat-WebApp.git)
+    cd RealTime-Chat-WebApp
+    ```
+
+2.  **Install Backend Dependencies**
+    ```bash
+    cd server
+    npm install
+    ```
+
+3.  **Install Frontend Dependencies**
+    ```bash
+    cd client
+    npm install
+    ```
+
+4.  **Environment Configuration**
+    Create a `.env` file in the `server` directory and add the following variables:
+    ```env
+    PORT=5000
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret_key
+    ```
+
+5.  **Run the Application**
+    
+    *Start the Backend server:*
+    ```bash
+    cd server
+    npm start
+    ```
+
+    *Start the React Frontend:*
+    ```bash
+    cd client
+    npm start
+    ```
