@@ -79,11 +79,11 @@ Best practices in state management, authentication, and data persistence.
     *Start the Backend server:*
     ```bash
     cd server
-    npm start
+    npm run dev
     ```
 
     *Start the React Frontend:*
     ```bash
     cd client
-    npm start
+    npm run dev
     ```
