@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
-    senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Made optional for system messages
     receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Optional for group messages
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }, // Optional for group messages
     text: { type: String },

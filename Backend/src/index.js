@@ -26,16 +26,40 @@ app.use("/api/groups", groupRoutes);
 const port=process.env.PORT || 5000;
 
 
-server.listen(port, () => {
-  console.log('Server is running on port '+port);
-  connectDB();
-});
+let retryCount = 0;
+const MAX_RETRIES = 5;
+
+const startServer = (p) => {
+  // If we already have a successful connection, stop retrying
+  if (server.listening) return;
+
+  server.listen(p, () => {
+    console.log(`✅ Server is running on port ${p}`);
+    connectDB();
+    retryCount = 0; // Reset counter on success
+  });
+};
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${port} is already in use. Please try again.`);
-    process.exit(1);
+    retryCount++;
+    if (retryCount <= MAX_RETRIES) {
+      console.log(`⚠️ Port ${port} is busy. Attempt ${retryCount}/${MAX_RETRIES}. Retrying in 5s...`);
+      
+      // CRITICAL: Close the current failed instance before retrying
+      server.close(); 
+      
+      setTimeout(() => {
+        startServer(port);
+      }, 5000);
+    } else {
+      console.error(`❌ Max retries reached. Please kill the process on port ${port} manually.`);
+      process.exit(1); // Stop the loop and let the developer intervene
+    }
   } else {
-    throw err;
+    console.error("Critical server error:", err);
+    process.exit(1);
   }
 });
+
+startServer(port);

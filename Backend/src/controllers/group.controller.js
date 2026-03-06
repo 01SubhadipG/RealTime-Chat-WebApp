@@ -1,5 +1,7 @@
 import Group from '../models/group.model.js';
 import User from '../models/user.model.js';
+import Message from '../models/message.model.js';
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const createGroup = async (req, res) => {
     try {
@@ -82,14 +84,26 @@ export const addMemberToGroup = async (req, res) => {
 
         await group.populate('members', 'username email profilePic');
 
+        // Create system message for member addition
+        const adder = await User.findById(userId);
+        const systemMessage = new Message({
+            groupId: group._id,
+            text: `${adder.username} added ${member.username}`,
+            messageType: "text"
+        });
+        await systemMessage.save();
+
         // notify existing members (and new member) via socket
-        group.members.forEach(id => {
-            const sid = getReceiverSocketId(id);
+        // Change this:
+        group.members.forEach(memberObj => { // renamed 'id' to 'memberObj' for clarity
+            const sid = getReceiverSocketId(memberObj._id); // Use ._id here
             if (sid) {
                 io.to(sid).emit("memberAdded", {
                     groupId: group._id,
                     member: member,
                 });
+                // Also emit the system message
+                io.to(sid).emit("newGroupMessage", systemMessage);
             }
         });
 
@@ -122,19 +136,34 @@ export const removeMemberFromGroup = async (req, res) => {
             return res.status(400).json({ message: "User is not a member" });
         }
 
+        // Get member info before removing
+        const memberToRemove = await User.findById(memberId);
+        const remover = await User.findById(userId);
+
         group.members = group.members.filter(id => String(id) !== String(memberId));
         await group.save();
 
         await group.populate('members', 'username email profilePic');
 
+        // Create system message for member removal
+        const systemMessage = new Message({
+            groupId: group._id,
+            text: `${remover.username} removed ${memberToRemove.username}`,
+            messageType: "text"
+        });
+        await systemMessage.save();
+
         // notify remaining members via socket
-        group.members.forEach(id => {
-            const sid = getReceiverSocketId(id);
+        // Change this:
+        group.members.forEach(memberObj => {
+            const sid = getReceiverSocketId(memberObj._id); // Use ._id here
             if (sid) {
                 io.to(sid).emit("memberRemoved", {
                     groupId: group._id,
                     memberId,
                 });
+                // Also emit the system message
+                io.to(sid).emit("newGroupMessage", systemMessage);
             }
         });
 
