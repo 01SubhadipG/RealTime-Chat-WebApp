@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
-import { Users, MessageCircle, Plus } from "lucide-react";
+import { Users, MessageCircle, Plus, Search } from "lucide-react";
 import assets from "../assets/assets";
 import CreateGroup from "./CreateGroup";
 
@@ -23,11 +23,21 @@ const Sidebar = () => {
     } = useChatStore();
     const { onlineUsers = [] } = useAuthStore();
     const [showCreateGroup, setShowCreateGroup] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         getUsers();
         getGroups();
     }, [getUsers, getGroups]);
+
+    // Filter users and groups based on search term
+    const filteredUsers = users.filter(user => 
+        user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredGroups = groups.filter(group => 
+        group.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     if (isUsersLoading || isGroupsLoading) return <SidebarSkeleton />;
 
@@ -65,10 +75,24 @@ const Sidebar = () => {
                         Groups
                     </button>
                 </div>
+
+                {/* Search Input */}
+                <div className="mt-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60 size-4" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 text-sm bg-base-200 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="overflow-y-auto w-full py-3">
-                {activeTab === "users" && users.map((user) => (
+                {activeTab === "users" && filteredUsers.map((user) => (
                     <button
                         key={user._id}
                         onClick={() => setSelectedUser(user)}
@@ -97,7 +121,7 @@ const Sidebar = () => {
                     </button>
                 ))}
 
-                {activeTab === "groups" && groups.map((group) => (
+                {activeTab === "groups" && filteredGroups.map((group) => (
                     <button
                         key={group._id}
                         onClick={() => setSelectedGroup(group)}
@@ -120,6 +144,21 @@ const Sidebar = () => {
                         </div>
                     </button>
                 ))}
+
+                {/* No results message */}
+                {activeTab === "users" && filteredUsers.length === 0 && searchTerm && (
+                    <div className="text-center py-8 text-base-content/60">
+                        <Search className="size-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No users found</p>
+                    </div>
+                )}
+
+                {activeTab === "groups" && filteredGroups.length === 0 && searchTerm && (
+                    <div className="text-center py-8 text-base-content/60">
+                        <Search className="size-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No groups found</p>
+                    </div>
+                )}
             </div>
             {showCreateGroup && <CreateGroup onClose={() => setShowCreateGroup(false)} />}
         </aside>
