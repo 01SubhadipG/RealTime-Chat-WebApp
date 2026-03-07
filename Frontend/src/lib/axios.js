@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-export const axiosInstance=axios.create({
-    baseURL: "http://localhost:3000/api",
-    withCredentials: true, //sends cookie with every requests
-})
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
+const axiosInstance = axios.create({
+  baseURL: `${API_URL}/api`, // This will now use Render in production
+  withCredentials: true,
+});
