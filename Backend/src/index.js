@@ -16,7 +16,10 @@ app.use(express.json({ limit: payloadLimit }));
 app.use(express.urlencoded({ extended: true, limit: payloadLimit }));
 app.use(cookieParser());
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: [
+    "https://realtime-chat-webapp-v84l.onrender.com", 
+    "http://localhost:5173"
+  ],
     credentials: true,
 }));
 
