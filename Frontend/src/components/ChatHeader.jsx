@@ -1,4 +1,4 @@
-import { X, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 import { useAuthStore } from "../Store/useAuthStore";
 import { useChatStore } from "../Store/useChatStore";
 import assets from "../assets/assets";
@@ -12,8 +12,17 @@ const ChatHeader = () => {
     if (!chatEntity) return null;
 
     return (
-        <div className="p-2.5 border-b border-base-300">
-            <div className="flex items-center justify-between">
+        <div className="p-2.5 border-b border-base-300 sticky top-0 z-10 bg-base-100">
+            <div className="flex items-center">
+                <button 
+                    onClick={() => {
+                        if (selectedUser) setSelectedUser(null);
+                        if (selectedGroup) setSelectedGroup(null);
+                    }} 
+                    className="btn btn-ghost btn-circle -ml-2"
+                >
+                    <ArrowLeft />
+                </button>
                 <div
                     className="flex items-center gap-3 cursor-pointer"
                     onClick={openDetailPanel}
@@ -39,16 +48,7 @@ const ChatHeader = () => {
                         </p>
                     </div>
                 </div>
-
-                <button 
-                    onClick={() => {
-                        if (selectedUser) setSelectedUser(null);
-                        if (selectedGroup) setSelectedGroup(null);
-                    }} 
-                    className="lg:hidden"
-                >
-                    <X />
-                </button>
+                <div className="flex-grow"></div>
             </div>
         </div>
     );

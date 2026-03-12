@@ -6,7 +6,11 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        'mobile': '1050px',
+      }
+    },
   },
   plugins: [
     require('daisyui') // This now works correctly with module.exports
