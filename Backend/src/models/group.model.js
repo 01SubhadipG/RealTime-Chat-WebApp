@@ -9,6 +9,10 @@ const groupSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    groupImage: {
+        type: String,
+        default: "",
+    },
     creator: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

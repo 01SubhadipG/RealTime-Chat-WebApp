@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useChatStore } from "../Store/useChatStore";
-import { X, Plus, Users } from "lucide-react";
+import { X, Plus, Users, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CreateGroup = ({ onClose }) => {
@@ -8,6 +8,9 @@ const CreateGroup = ({ onClose }) => {
     const [groupDescription, setGroupDescription] = useState("");
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [groupImage, setGroupImage] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null);
+    const fileInputRef = useRef(null);
 
     const { users, createGroup, setSelectedGroup, getGroups, setActiveTab } = useChatStore();
 
@@ -25,6 +28,18 @@ const CreateGroup = ({ onClose }) => {
         setSelectedMembers(selectedMembers.filter(member => member._id !== userId));
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setGroupImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleCreateGroup = async () => {
         if (!groupName.trim()) {
             toast.error("Group name is required");
@@ -36,20 +51,45 @@ const CreateGroup = ({ onClose }) => {
         }
 
         const memberIds = selectedMembers.map(member => member._id);
-        const newGroup = await createGroup({
-            name: groupName.trim(),
-            description: groupDescription.trim(),
-            memberIds
-        });
+        const reader = new FileReader();
+        let base64Image = "";
+        if (groupImage) {
+            reader.readAsDataURL(groupImage);
+            reader.onloadend = async () => {
+                base64Image = reader.result;
+                const newGroup = await createGroup({
+                    name: groupName.trim(),
+                    description: groupDescription.trim(),
+                    memberIds,
+                    groupImage: base64Image
+                });
 
-        // switch to the new group chat automatically if creation succeeded
-        if (newGroup) {
-            setSelectedGroup(newGroup);
-            setActiveTab("groups");
-            getGroups(); // refresh list just in case
+                // switch to the new group chat automatically if creation succeeded
+                if (newGroup) {
+                    setSelectedGroup(newGroup);
+                    setActiveTab("groups");
+                    getGroups(); // refresh list just in case
+                }
+
+                onClose();
+            };
+        } else {
+            const newGroup = await createGroup({
+                name: groupName.trim(),
+                description: groupDescription.trim(),
+                memberIds,
+                groupImage: ""
+            });
+
+            // switch to the new group chat automatically if creation succeeded
+            if (newGroup) {
+                setSelectedGroup(newGroup);
+                setActiveTab("groups");
+                getGroups(); // refresh list just in case
+            }
+
+            onClose();
         }
-
-        onClose();
     };
 
     return (
@@ -63,6 +103,26 @@ const CreateGroup = ({ onClose }) => {
                 </div>
 
                 <div className="space-y-4">
+                    <div className="flex justify-center">
+                        <div className="relative w-24 h-24 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center cursor-pointer"
+                            onClick={() => fileInputRef.current.click()}
+                        >
+                            {previewImage ? (
+                                <img src={previewImage} alt="Group" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full rounded-full bg-base-300 flex items-center justify-center">
+                                    <Users size={48} className="text-base-content/60" />
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                        </div>
+                    </div>
                     <div>
                         <label className="label">
                             <span className="label-text">Group Name</span>

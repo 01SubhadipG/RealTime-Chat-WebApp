@@ -91,7 +91,76 @@ export const useChatStore = create((set, get) => ({
       toast.success("Group created successfully");
       return res.data;
     } catch (error) {
+      console.error(error.response);
       toast.error(error.response.data.message);
+    }
+  },
+
+  updateGroupProfile: async (groupId, groupImage) => {
+    try {
+      const res = await axiosInstance.post(`/groups/update-profile/${groupId}`, { groupImage });
+      const updatedGroup = res.data;
+      const { groups, selectedGroup } = get();
+      const updatedGroups = groups.map(g => String(g._id) === String(groupId) ? updatedGroup : g);
+      set({ groups: updatedGroups });
+      if (selectedGroup?._id === groupId) set({ selectedGroup: updatedGroup });
+      toast.success("Group image updated successfully");
+      return updatedGroup;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update group image");
+    }
+  },
+
+  updateGroupDetails: async (groupId, groupData) => {
+    try {
+        const res = await axiosInstance.put(`/groups/${groupId}/update-details`, groupData);
+        const updatedGroup = res.data;
+        const { groups, selectedGroup } = get();
+        const updatedGroups = groups.map(g => (g._id === groupId ? updatedGroup : g));
+        set({ groups: updatedGroups });
+
+        if (selectedGroup?._id === groupId) {
+            set({ selectedGroup: updatedGroup });
+        }
+        toast.success("Group details updated successfully");
+        return updatedGroup;
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to update group details");
+        throw error;
+    }
+  },
+
+  deleteGroup: async (groupId) => {
+    try {
+        await axiosInstance.delete(`/groups/${groupId}`);
+        const { groups, selectedGroup } = get();
+        const updatedGroups = groups.filter(g => g._id !== groupId);
+        set({ groups: updatedGroups });
+
+        if (selectedGroup?._id === groupId) {
+            set({ selectedGroup: null });
+        }
+        toast.success("Group deleted successfully");
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to delete group");
+        throw error;
+    }
+  },
+
+  leaveGroup: async (groupId) => {
+    try {
+        await axiosInstance.post(`/groups/${groupId}/leave`);
+        const { groups, selectedGroup } = get();
+        const updatedGroups = groups.filter(g => g._id !== groupId);
+        set({ groups: updatedGroups });
+
+        if (selectedGroup?._id === groupId) {
+            set({ selectedGroup: null });
+        }
+        toast.success("You have left the group");
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to leave group");
+        throw error;
     }
   },
 

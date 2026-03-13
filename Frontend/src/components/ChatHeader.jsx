@@ -30,9 +30,7 @@ const ChatHeader = () => {
                     <div className="avatar">
                         <div className="size-10 rounded-full relative">
                             {selectedGroup ? (
-                                <div className="bg-primary rounded-full flex items-center justify-center w-full h-full">
-                                    <MessageCircle className="size-6 text-primary-content" />
-                                </div>
+                                <img src={selectedGroup.groupImage || assets.user_icon} alt={selectedGroup.name} />
                             ) : (
                                 <img src={selectedUser.profilePic || assets.user_icon} alt={selectedUser?.username} />
                             )}

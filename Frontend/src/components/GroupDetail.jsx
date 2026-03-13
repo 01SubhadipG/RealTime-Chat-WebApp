@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { X, Users, UserPlus, Trash2, Image, FileText, Download, ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Users, UserPlus, Trash2, Image, FileText, Download, ChevronDown, ChevronUp, Edit } from "lucide-react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import assets from "../assets/assets";
+import toast from "react-hot-toast";
+import EditGroup from "./EditGroup";
 
 const GroupDetail = ({ group: initialGroup, onClose }) => {
-    const { users, addMemberToGroup, removeMemberFromGroup, getUsers, getGroupMessages, messages } = useChatStore();
+    const { users, addMemberToGroup, removeMemberFromGroup, getUsers, getGroupMessages, messages, updateGroupProfile, deleteGroup, leaveGroup } = useChatStore();
     const { authUser } = useAuthStore();
     const [group, setGroup] = useState(initialGroup);
     const [searchTerm, setSearchTerm] = useState("");
     const [isAdding, setIsAdding] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [groupMessages, setGroupMessages] = useState([]);
     const [showAllImages, setShowAllImages] = useState(false);
     const [showAllFiles, setShowAllFiles] = useState(false);
+    const [groupImage, setGroupImage] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null);
+    const fileInputRef = useRef(null);
 
     // keep local state up-to-date when parent passes a different group
     useEffect(() => {
         setGroup(initialGroup);
+        setPreviewImage(initialGroup.groupImage);
     }, [initialGroup]);
 
     useEffect(() => {
@@ -35,7 +42,7 @@ const GroupDetail = ({ group: initialGroup, onClose }) => {
         }
     }, [group?._id, getGroupMessages, messages]);
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = users.filter(u =>
         !group.members.some(m => String(m._id) === String(u._id)) &&
         u.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -54,10 +61,64 @@ const GroupDetail = ({ group: initialGroup, onClose }) => {
         setIsAdding(false);
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setGroupImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleUpdateGroupImage = async () => {
+        if (!groupImage) {
+            toast.error("Please select an image");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(groupImage);
+        reader.onloadend = async () => {
+            const base64Image = reader.result;
+            const updatedGroup = await updateGroupProfile(group._id, base64Image);
+            if (updatedGroup) {
+                setGroup(updatedGroup);
+                toast.success("Group image updated successfully");
+            }
+        };
+    };
+
+    const handleDeleteGroup = async () => {
+        if (window.confirm("Are you sure you want to delete this group? This action cannot be undone.")) {
+            try {
+                await deleteGroup(group._id);
+                onClose();
+            } catch (error) {
+                // Handled in store
+            }
+        }
+    };
+
+    const handleLeaveGroup = async () => {
+        if (window.confirm("Are you sure you want to leave this group?")) {
+            try {
+                await leaveGroup(group._id);
+                onClose();
+            } catch (error) {
+                // Handled in store
+            }
+        }
+    };
+
+
     if (!group) return null;
 
     return (
         <aside className="h-[calc(100%-4rem)] w-full sm:w-80 border-l border-base-300 flex flex-col absolute top-16 right-0 bg-base-100 z-40">
+            {isEditing && <EditGroup group={group} onClose={() => setIsEditing(false)} />}
             <div className="border-b border-base-300 w-full p-4 flex items-center gap-4">
                 <button onClick={onClose} className="btn btn-ghost btn-circle btn-sm">
                     <X className="size-5" />
@@ -66,8 +127,40 @@ const GroupDetail = ({ group: initialGroup, onClose }) => {
             </div>
 
             <div className="flex flex-col flex-1 overflow-y-auto">
-                <div className="p-6 border-b border-base-300">
-                    <h3 className="text-xl font-semibold">{group.name}</h3>
+                <div className="p-6 border-b border-base-300 text-center">
+                    <div className="relative w-24 h-24 rounded-full mx-auto border-2 border-dashed border-gray-400 flex items-center justify-center cursor-pointer">
+                        {previewImage ? (
+                            <img src={previewImage} alt={group.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full rounded-full bg-base-300 flex items-center justify-center">
+                                <Users size={48} className="text-base-content/60" />
+                            </div>
+                        )}
+                        <button
+                            className="absolute bottom-0 right-0 bg-primary text-primary-content rounded-full p-1"
+                            onClick={() => fileInputRef.current.click()}
+                        >
+                            <Edit size={16} />
+                        </button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                        />
+                    </div>
+                    {groupImage && (
+                        <button className="btn btn-primary btn-sm mt-2" onClick={handleUpdateGroupImage}>
+                            Update Image
+                        </button>
+                    )}
+                    <div className="flex justify-center items-center gap-2">
+                        <h3 className="text-xl font-semibold mt-2">{group.name}</h3>
+                        <button onClick={() => setIsEditing(true)} className="btn btn-ghost btn-circle btn-sm">
+                            <Edit size={16} />
+                        </button>
+                    </div>
                     {group.description && <p className="text-sm mt-1 text-base-content/70">{group.description}</p>}
                 </div>
 
@@ -271,6 +364,11 @@ const GroupDetail = ({ group: initialGroup, onClose }) => {
                             )}
                         </div>
                     )}
+                    <div className="mt-6 text-center">
+                        <button onClick={handleLeaveGroup} className="btn btn-warning btn-sm">
+                            Leave Group
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>

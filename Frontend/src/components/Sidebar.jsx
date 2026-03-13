@@ -133,9 +133,11 @@ const Sidebar = () => {
                             `}
                         >
                             <div className="relative">
-                                <div className="size-12 bg-primary rounded-full flex items-center justify-center">
-                                    <MessageCircle className="size-6 text-primary-content" />
-                                 </div>
+                                <img
+                                    src={group.groupImage || assets.user_icon}
+                                    alt={group.name}
+                                    className="size-12 object-cover rounded-full"
+                                />
                             </div>
                             <div className="text-left min-w-0">
                                 <div className="font-medium truncate">{group.name}</div>
@@ -189,9 +191,11 @@ const Sidebar = () => {
                             `}
                         >
                             <div className="relative">
-                                <div className="size-12 bg-primary rounded-full flex items-center justify-center">
-                                    <MessageCircle className="size-6 text-primary-content" />
-                                </div>
+                                <img
+                                    src={group.groupImage || assets.user_icon}
+                                    alt={group.name}
+                                    className="size-12 object-cover rounded-full"
+                                />
                             </div>
                             <div className="text-left min-w-0">
                                 <div className="font-medium truncate">{group.name}</div>
