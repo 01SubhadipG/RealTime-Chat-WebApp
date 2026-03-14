@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { io } from "socket.io-client"; // FIX 1: Import io
 
 // FIX 2: Define BASE_URL (or import it from a config file)
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000" : "https://realtime-chat-webapp-v84l.onrender.com";
 
 // FIX 3: Add 'get' to the arguments here ----------------v
 export const useAuthStore = create((set, get) => ({
@@ -103,18 +103,28 @@ export const useAuthStore = create((set, get) => ({
       query: {
         userId: authUser._id,
       },
+      transports: ["websocket"], // CRITICAL: This bypasses Render's proxy issues with "polling"
+      secure: true,              // Ensures connection over WSS (WebSocket Secure)
     });
     
     socket.connect();
-
     set({ socket: socket });
 
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    // Optional: Add logging to catch errors in the browser console
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+    });
   },
 
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
+    if (get().socket?.connected) {
+      get().socket.disconnect();
+      // Clear socket from state to prevent memory leaks
+      set({ socket: null }); 
+    }
   },
 }));
