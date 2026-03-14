@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import Sidebar from "../components/Sidebar";
 import NoChatSelected from "../components/NoChatSelected";
@@ -5,9 +6,15 @@ import ChatContainer from "../components/ChatContainer";
 import Navbar from "../components/Navbar";
 
 const HomePage = () => {
-  const { selectedUser, selectedGroup } = useChatStore();
+  const { selectedUser, selectedGroup, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
 
   const isChatOpen = Boolean(selectedUser || selectedGroup);
+
+  useEffect(() => {
+    subscribeToMessages();
+
+    return () => unsubscribeFromMessages();
+  }, [subscribeToMessages, unsubscribeFromMessages]);
 
   return (
     <div className="h-screen bg-base-200">
