@@ -104,6 +104,7 @@ export const useAuthStore = create((set, get) => ({
         userId: authUser._id,
       },
       transports: ["websocket"], // Forces it to skip polling entirely
+      upgrade: false,            // CRITICAL: Disable upgrade logic
     });
     
     socket.connect();

@@ -36,7 +36,7 @@ const startServer = (p) => {
   // If we already have a successful connection, stop retrying
   if (server.listening) return;
 
-  server.listen(p, () => {
+  server.listen(p, "0.0.0.0",() => {
     console.log(`✅ Server is running on port ${p}`);
     connectDB();
     retryCount = 0; // Reset counter on success
