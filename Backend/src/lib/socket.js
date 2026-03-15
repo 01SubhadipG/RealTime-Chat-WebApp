@@ -8,9 +8,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    credentials: true // Recommended for MERN sessions
+    credentials: true
   },
-  transports: ['websocket', 'polling'] // Add this line
+  transports: ['websocket', 'polling']
 });
 
 export function getReceiverSocketId(userId) {

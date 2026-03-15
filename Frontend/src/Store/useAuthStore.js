@@ -103,9 +103,6 @@ export const useAuthStore = create((set, get) => ({
       query: {
         userId: authUser._id,
       },
-      transports: ["websocket"], // CRITICAL: This bypasses Render's proxy issues with "polling"
-      secure: true,              // Ensures connection over WSS (WebSocket Secure)
-      upgrade: false,            // Disable HTTP long-polling fallback
     });
     
     socket.connect();
