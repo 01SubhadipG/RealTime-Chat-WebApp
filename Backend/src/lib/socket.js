@@ -7,7 +7,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://realtime-chat-webapp-v84l.onrender.com", "http://localhost:5173"],
+    origin: "*",
     credentials: true // Recommended for MERN sessions
   },
   transports: ['websocket', 'polling'] // Add this line
