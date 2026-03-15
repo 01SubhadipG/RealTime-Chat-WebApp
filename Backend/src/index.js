@@ -5,64 +5,47 @@ import connectDB from './lib/db.js';
 import cookieParser from 'cookie-parser';
 import messageRoutes from './routes/message.routes.js';
 import cors from 'cors';
-import { app,server } from './lib/socket.js';
+import { app, server } from './lib/socket.js'; // server is the http instance
 import groupRoutes from './routes/group.routes.js';
+import path from "path"; // Added for production pathing
 
 dotenv.config();
 
-const payloadLimit = '50mb'; // Set your desired limit
+const port = process.env.PORT || 5000;
+const payloadLimit = '50mb';
 
+// 1. Middleware
 app.use(express.json({ limit: payloadLimit }));
 app.use(express.urlencoded({ extended: true, limit: payloadLimit }));
 app.use(cookieParser());
+
+// 2. CORS - Ensure no trailing slashes
 app.use(cors({
-    origin: [
+  origin: [
     "https://realtime-chat-webapp-v84l.onrender.com", 
     "http://localhost:5173"
   ],
-    credentials: true,
+  credentials: true,
 }));
 
-app.use("/api/auth",authRoutes);
-app.use("/api/messages",messageRoutes);
+// 3. Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
-const port=process.env.PORT || 5000;
 
+// 4. Deployment logic (Optional but recommended)
+if (process.env.NODE_ENV === "production") {
+  const __dirname = path.resolve();
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-let retryCount = 0;
-const MAX_RETRIES = 5;
-
-const startServer = (p) => {
-  // If we already have a successful connection, stop retrying
-  if (server.listening) return;
-
-  server.listen(p, "0.0.0.0",() => {
-    console.log(`✅ Server is running on port ${p}`);
-    connectDB();
-    retryCount = 0; // Reset counter on success
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
-};
+}
 
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    retryCount++;
-    if (retryCount <= MAX_RETRIES) {
-      console.log(`⚠️ Port ${port} is busy. Attempt ${retryCount}/${MAX_RETRIES}. Retrying in 5s...`);
-      
-      // CRITICAL: Close the current failed instance before retrying
-      server.close(); 
-      
-      setTimeout(() => {
-        startServer(port);
-      }, 5000);
-    } else {
-      console.error(`❌ Max retries reached. Please kill the process on port ${port} manually.`);
-      process.exit(1); // Stop the loop and let the developer intervene
-    }
-  } else {
-    console.error("Critical server error:", err);
-    process.exit(1);
-  }
+// 5. THE STARTUP LOGIC (Simplified for Render)
+// REMOVE the retry logic. Render handles restarts automatically.
+server.listen(port, "0.0.0.0", () => {
+  console.log(`✅ Server is running on port ${port}`);
+  connectDB();
 });
-
-startServer(port);

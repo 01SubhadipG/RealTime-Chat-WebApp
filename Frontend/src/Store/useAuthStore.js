@@ -105,6 +105,7 @@ export const useAuthStore = create((set, get) => ({
       },
       transports: ["websocket"], // Forces it to skip polling entirely
       upgrade: false,            // CRITICAL: Disable upgrade logic
+      withCredentials: true      // Required for your CORS setup
     });
     
     socket.connect();
