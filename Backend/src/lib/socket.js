@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     // Replace with your actual frontend Render URL
-    origin: process.env.NODE_ENV === "production" 
+    origin: process.env.NODE_ENV === "development" 
       ? "https://realtime-chat-webapp-v84l.onrender.com" 
       : "http://localhost:5173", 
     credentials: true
