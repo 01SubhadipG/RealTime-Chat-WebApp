@@ -103,6 +103,7 @@ export const useAuthStore = create((set, get) => ({
       query: {
         userId: authUser._id,
       },
+      transports: ["websocket"], // Forces it to skip polling entirely
     });
     
     socket.connect();

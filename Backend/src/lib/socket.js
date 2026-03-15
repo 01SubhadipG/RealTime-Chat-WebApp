@@ -7,10 +7,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    // Replace with your actual frontend Render URL
+    origin: process.env.NODE_ENV === "production" 
+      ? "https://realtime-chat-webapp-v84l.onrender.com" 
+      : "http://localhost:5173", 
     credentials: true
   },
-  transports: ['websocket', 'polling']
+  // Ensure websocket is the primary transport
+  transports: ['websocket', 'polling'],
+  allowEIO3: true // Helps with compatibility if versions differ slightly
 });
 
 export function getReceiverSocketId(userId) {
