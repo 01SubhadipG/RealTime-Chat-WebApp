@@ -13,7 +13,10 @@ dotenv.config();
 
 const payloadLimit = '50mb'; // Set your desired limit
 
-
+process.on('uncaughtException', (err) => {
+  console.error('CRASH FILENAME:', err.stack.split('\n')[1]);
+  process.exit(1);
+});
 
 app.use(express.json({ limit: payloadLimit }));
 app.use(express.urlencoded({ extended: true, limit: payloadLimit }));
