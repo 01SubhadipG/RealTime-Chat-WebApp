@@ -72,6 +72,7 @@ export const logout=(req,res)=>{
             httpOnly: true,
             secure: true,
             sameSite: "none",
+            expires: new Date(0), // Forces immediate expiration
         });
         res.status(200).json({message:"Logout successful"});
     }
