@@ -4,11 +4,10 @@ export const generateToken = (userId, res) => {
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.cookie('jwt', token, {
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        httpOnly: true, 
-        // For Render (Cross-site), these two must be set like this:
-        secure: true, 
-        sameSite: 'none', 
+        httpOnly: true,
+        secure: true,      // Must be true for HTTPS on Render
+        sameSite: "none",  // Must be "none" for cross-site cookies
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days 
     });
 
     return token;
