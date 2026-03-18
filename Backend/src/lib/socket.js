@@ -5,46 +5,56 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    // Replace with your actual frontend Render URL
-    origin: process.env.NODE_ENV === "development" 
-      ? "https://realtime-chat-webapp-v84l.onrender.com" 
-      : "http://localhost:5173", 
-    credentials: true
-  },
-  // Ensure websocket is the primary transport
-  transports: ['websocket', 'polling'],
-  allowEIO3: true // Helps with compatibility if versions differ slightly
-});
+// Helper to store online users: { userId: [socketId1, socketId2] }
+const userSocketMap = {}; 
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
-// used to store online users
-const userSocketMap = {}; // {userId: [socketId1, socketId2, ...]}
+const io = new Server(server, {
+  cors: {
+    // FIX: Allow both Local and Production URLs to avoid "Finished" status
+    origin: [
+      "http://localhost:5173", 
+      "https://realtime-chat-webapp-v84l.onrender.com",
+      "https://your-frontend-deployment-url.netlify.app" // Add your actual frontend URL here
+    ],
+    credentials: true
+  },
+  // Force WebSockets for stability on Render's infrastructure
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
 
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
-
   const userId = socket.handshake.query.userId;
-  if (userId) {
-    if (!userSocketMap[userId]) {
-      userSocketMap[userId] = [];
-    }
-    userSocketMap[userId].push(socket.id);
+
+  // No. 3 Fix: Handle missing or "undefined" string userId
+  if (!userId || userId === "undefined" || userId === "null") {
+    console.log("Connection rejected: No valid userId provided.");
+    return socket.disconnect(); 
   }
 
-  // io.emit() is used to send events to all the connected clients
+  console.log(`User connected: ${userId} (Socket: ${socket.id})`);
+
+  // Map the user (Supports multiple tabs/devices)
+  if (!userSocketMap[userId]) {
+    userSocketMap[userId] = [];
+  }
+  userSocketMap[userId].push(socket.id);
+
+  // Notify everyone who is online
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
-    if (userId && userSocketMap[userId]) {
-      userSocketMap[userId] = userSocketMap[userId].filter(
-        (id) => id !== socket.id
-      );
+    console.log(`User disconnected: ${userId}`);
+    if (userSocketMap[userId]) {
+      // Remove only this specific socket ID
+      userSocketMap[userId] = userSocketMap[userId].filter((id) => id !== socket.id);
+      
+      // If no more tabs open for this user, remove them from the map
       if (userSocketMap[userId].length === 0) {
         delete userSocketMap[userId];
       }
@@ -53,38 +63,10 @@ io.on("connection", (socket) => {
   });
 });
 
-// Handle server errors (e.g., port already in use)
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port is already in use. Waiting 5 seconds before retrying...`);
-    setTimeout(() => {
-      server.close();
-      server.listen(process.env.PORT || 5000);
-    }, 5000);
-  } else {
-    throw err;
-  }
+// Port configuration for Render
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
-
-// Graceful shutdown handling
-const gracefulShutdown = () => {
-  console.log('Shutting down gracefully...');
-  io.on('connection', (socket) => {
-    socket.disconnect(true);
-  });
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-  
-  // Force close after 10 seconds if not closed
-  setTimeout(() => {
-    console.error('Forcing shutdown');
-    process.exit(1);
-  }, 10000);
-};
-
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
 
 export { io, app, server };
