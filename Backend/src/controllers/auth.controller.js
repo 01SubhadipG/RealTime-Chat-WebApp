@@ -68,6 +68,7 @@ export const signup=async(req,res)=>{
 export const logout=(req,res)=>{
     try{
         res.cookie('jwt', '', {
+            maxAge: 0,
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
             sameSite: 'strict',
