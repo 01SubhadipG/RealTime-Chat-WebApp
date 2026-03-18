@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { io } from "socket.io-client"; // FIX 1: Import io
 
 // FIX 2: Define BASE_URL (or import it from a config file)
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000" : "https://realtime-chat-webapp-v84l.onrender.com";
+const BASE_URL = import.meta.env.MODE === "development" ? "https://realtime-chat-webapp-v84l.onrender.com" : "http://localhost:3000";
 
 // FIX 3: Add 'get' to the arguments here ----------------v
 export const useAuthStore = create((set, get) => ({
