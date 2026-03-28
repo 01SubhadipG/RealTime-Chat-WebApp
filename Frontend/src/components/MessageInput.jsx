@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import UserDetail from "./UserDetail";
 import GroupDetail from "./GroupDetail";
 
-export const MessageInput = () => {
+const MessageInput = () => {
     const [text, setText] = useState("");
     const [filePreview, setFilePreview] = useState(null);
     const [fileData, setFileData] = useState(null);

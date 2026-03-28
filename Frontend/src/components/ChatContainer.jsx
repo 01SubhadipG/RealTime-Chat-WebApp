@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import ChatHeader from "./ChatHeader";
-import { MessageInput } from "./MessageInput";
+import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { FileText, Download } from "lucide-react"; 
 import assets from "../assets/assets";
-import ImageModal from "./ImageModal";
+
 
 const ChatContainer = () => {
   const { 
@@ -21,7 +21,7 @@ const ChatContainer = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+
 
   useEffect(() => {
     if (selectedUser) {
@@ -88,7 +88,7 @@ const ChatContainer = () => {
                   />
                 </div>
               </div>
-              
+
               <div className={`chat-bubble flex flex-col gap-2 ${message.pending ? 'opacity-50' : ''}`}>
                 {selectedGroup && message.senderId !== authUser._id && (
                   <div className="text-xs font-medium text-base-content/70">
@@ -97,12 +97,12 @@ const ChatContainer = () => {
                 )}
 
                 {/* --- RENDER IMAGES --- */}
-                {message.messageType === "image" && (
+                {(message.messageType === "image" || (message.file && !message.messageType)) && (
                   <img 
-                    src={message.file} 
+                    src={message.file || message.image} 
                     alt="Attachment" 
                     className="sm:max-w-[200px] rounded-md mb-2 cursor-pointer hover:opacity-90 transition-opacity" 
-                    onClick={() => setSelectedImage(message.file)}
+                    onClick={() => window.open(message.file || message.image, "_blank")}
                   />
                 )}
 
@@ -116,13 +116,13 @@ const ChatContainer = () => {
                       <p className="text-sm font-medium truncate">{message.fileName || "Document"}</p>
                       {message.file && (
                         <a 
-                          href={message.file} 
+                          href={message.file.replace("/upload/", "/upload/fl_attachment/")} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          download
+                          download={message.fileName || "file.pdf"}
                           className="text-[10px] text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
                         >
-                          <Download size={12} /> Download
+                          <Download size={12} /> DOWNLOAD
                         </a>
                       )}
                     </div>
@@ -144,7 +144,9 @@ const ChatContainer = () => {
         <div ref={messageEndRef} />
       </div>
       <MessageInput />
-      <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />
+
     </div>
   );
 };
+
+export default ChatContainer;
