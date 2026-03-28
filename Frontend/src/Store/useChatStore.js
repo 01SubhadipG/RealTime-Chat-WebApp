@@ -315,19 +315,18 @@ subscribeToMessages: () => {
     socket.off("messagesSeen");
 
     socket.on("newMessage", (newMessage) => {
+        // Acknowledge message delivery immediately
+        socket.emit("messageDelivered", { messageId: newMessage._id });
+
         const { selectedUser } = get();
-        
         const isFromSelectedUser = selectedUser &&
           String(newMessage.senderId) === String(selectedUser._id);
         
-        if (!isFromSelectedUser) return;
-
-        set((state) => ({
-            messages: [...state.messages, newMessage],
-        }));
-
-        // Acknowledge message delivery
-        socket.emit("messageDelivered", { messageId: newMessage._id });
+        if (isFromSelectedUser) {
+          set((state) => ({
+              messages: [...state.messages, newMessage],
+          }));
+        }
     });
 
     socket.on("newGroupMessage", (newMessage) => {
