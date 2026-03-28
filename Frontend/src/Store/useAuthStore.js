@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import { axiosInstance } from '../lib/axios';
 import { toast } from 'react-hot-toast';
-import { io } from "socket.io-client"; // FIX 1: Import io
+import { io } from "socket.io-client";
 
-// FIX 2: Define BASE_URL (or import it from a config file)
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://realtime-chat-webapp-v84l.onrender.com";
 
-// FIX 3: Add 'get' to the arguments here ----------------v
 export const useAuthStore = create((set, get) => ({
   authUser: null,
   isSigningUp: false,
@@ -21,7 +19,6 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.get('/auth/check');
       set({ authUser: res.data.user });
       
-      // Optional: Auto-connect socket if user is found
       get().connectSocket(); 
     } catch (error) {
       console.log(error);
@@ -38,7 +35,7 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       toast.success("Signup successful!");
       
-      get().connectSocket(); // Connect socket on signup
+      get().connectSocket();
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed");
     } finally {
@@ -50,10 +47,10 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post('/auth/login', formData);
-      set({ authUser: res.data.user }); // Ensure this matches your API response structure
+      set({ authUser: res.data.user });
       toast.success("Login successful!");
       
-      get().connectSocket(); // Connect socket on login
+      get().connectSocket();
       return true;
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
@@ -69,7 +66,7 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: null });
       toast.success("Logged out successfully!");
       
-      get().disconnectSocket(); // Disconnect socket on logout
+      get().disconnectSocket();
       return true;
     } catch (error) {
       toast.error("Logout failed");
@@ -93,19 +90,17 @@ export const useAuthStore = create((set, get) => ({
   },
 
   connectSocket: () => {
-    // We can now safely use get() because we added it to create((set, get))
     const { authUser } = get();
     
-    // Safety check: Don't connect if not logged in or already connected
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
       query: {
         userId: authUser._id,
       },
-      transports: ["websocket"], // Forces it to skip polling entirely
-      upgrade: false,            // CRITICAL: Disable upgrade logic
-      withCredentials: true      // Required for your CORS setup
+      transports: ["websocket"],
+      upgrade: false,
+      withCredentials: true
     });
     
     socket.connect();
@@ -115,7 +110,6 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: userIds });
     });
 
-    // Optional: Add logging to catch errors in the browser console
     socket.on("connect_error", (err) => {
       console.error("Socket connection error:", err);
     });
@@ -124,7 +118,6 @@ export const useAuthStore = create((set, get) => ({
   disconnectSocket: () => {
     if (get().socket?.connected) {
       get().socket.disconnect();
-      // Clear socket from state to prevent memory leaks
       set({ socket: null }); 
     }
   },

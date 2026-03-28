@@ -6,9 +6,24 @@ import ChatContainer from "../components/ChatContainer";
 import Navbar from "../components/Navbar";
 
 const HomePage = () => {
-  const { selectedUser, selectedGroup, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
+  const { 
+    selectedUser, 
+    selectedGroup, 
+    getMessages, 
+    getGroupMessages, 
+    subscribeToMessages, 
+    unsubscribeFromMessages 
+  } = useChatStore();
 
   const isChatOpen = Boolean(selectedUser || selectedGroup);
+
+  useEffect(() => {
+    if (selectedUser) {
+      getMessages(selectedUser._id);
+    } else if (selectedGroup) {
+      getGroupMessages(selectedGroup._id);
+    }
+  }, [selectedUser, selectedGroup, getMessages, getGroupMessages]);
 
   useEffect(() => {
     subscribeToMessages();
