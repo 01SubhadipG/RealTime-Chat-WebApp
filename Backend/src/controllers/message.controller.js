@@ -64,8 +64,8 @@ export const sendMessages = async (req, res) => {
     if (file) {
       const uploadResponse = await cloudinary.v2.uploader.upload(file, {
         resource_type: "auto",
-        folder: "chat_documents", 
-        flags: "attachment", // <--- ADD THIS LINE
+        folder: "chat_documents",
+        flags: "attachment",
       });
       fileUrl = uploadResponse.secure_url;
     }
@@ -76,26 +76,17 @@ export const sendMessages = async (req, res) => {
       text,
       file: fileUrl,
       fileName: fileName || "attachment",
-      // If it's a doc, we mark it as 'file' for the frontend to render an icon
       messageType: messageType || (file ? "file" : "text"),
     });
 
-    // --- SPEED OPTIMIZATION START ---
-    
-    // 1. Emit to socket IMMEDIATELY before saving to DB
+    await newMessage.save();
+
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    // 2. Respond to the sender IMMEDIATELY
     res.status(201).json(newMessage);
-
-    // 3. Save to DB in the background (no 'await' blocking the response)
-    newMessage.save().catch(err => console.error("DB Save Error:", err));
-
-    // --- SPEED OPTIMIZATION END ---
-
   } catch (error) {
     console.error("Error:", error.message);
     if (!res.headersSent) {
@@ -124,7 +115,7 @@ export const sendGroupMessage = async (req, res) => {
     if (file) {
       const uploadResponse = await cloudinary.v2.uploader.upload(file, {
         resource_type: "auto",
-        folder: "chat_documents", 
+        folder: "chat_documents",
         flags: "attachment",
       });
       fileUrl = uploadResponse.secure_url;
@@ -139,26 +130,24 @@ export const sendGroupMessage = async (req, res) => {
       messageType: messageType || (file ? "file" : "text"),
     });
 
-    // 1. EMIT TO GROUP MEMBERS IMMEDIATELY
-    const groups = await Group.findById(groupId); // We still need members list
-    if (groups) {
-      groups.members.forEach(memberId => {
-        if (memberId.toString() !== senderId.toString()) {
-          const receiverSocketId = getReceiverSocketId(memberId);
-          if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newGroupMessage", newMessage);
-          }
-        }
-      });
-    }
+    await newMessage.save();
 
-    // 2. RESPOND TO SENDER
+    // EMIT TO GROUP MEMBERS
+    group.members.forEach(memberId => {
+      if (memberId.toString() !== senderId.toString()) {
+        const receiverSocketId = getReceiverSocketId(memberId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("newGroupMessage", newMessage);
+        }
+      }
+    });
+
     res.status(201).json(newMessage);
 
-    // 3. SAVE IN BACKGROUND
-    newMessage.save().catch(err => console.error("Group DB Save Error:", err));
-
   } catch (error) {
-    // ... error handling
+    console.error("Group Message Error:", error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Failed to send group message" });
+    }
   }
 };

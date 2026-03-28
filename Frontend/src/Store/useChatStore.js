@@ -169,6 +169,10 @@ export const useChatStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
+      const socket = useAuthStore.getState().socket;
+      if (socket) {
+        socket.emit("messagesSeen", { conversationId: userId, senderId: userId });
+      }
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
@@ -189,21 +193,63 @@ export const useChatStore = create((set, get) => ({
   },
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
+    const tempId = Date.now(); // Temporary ID for the message
+    const tempMessage = {
+      ...messageData,
+      _id: tempId,
+      senderId: useAuthStore.getState().authUser._id,
+      receiverId: selectedUser._id,
+      createdAt: new Date().toISOString(),
+      status: "sending",
+    };
+
+    set({ messages: [...messages, tempMessage] });
+
     try {
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: [...messages, res.data] });
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === tempId ? res.data : msg
+        ),
+      }));
     } catch (error) {
       toast.error(error.response.data.message);
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === tempId ? { ...msg, status: "failed" } : msg
+        ),
+      }));
     }
   },
 
   sendGroupMessage: async (messageData) => {
     const { selectedGroup, messages } = get();
+    const tempId = Date.now(); // Temporary ID for the message
+    const tempMessage = {
+      ...messageData,
+      _id: tempId,
+      senderId: useAuthStore.getState().authUser._id,
+      groupId: selectedGroup._id,
+      createdAt: new Date().toISOString(),
+      status: "sending",
+    };
+
+    set({ messages: [...messages, tempMessage] });
+
     try {
       const res = await axiosInstance.post(`/messages/send-group/${selectedGroup._id}`, messageData);
-      set({ messages: [...messages, res.data] });
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === tempId ? res.data : msg
+        ),
+      }));
     } catch (error) {
       toast.error(error.response.data.message);
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === tempId ? { ...msg, status: "failed" } : msg
+        ),
+      }));
     }
   },
 
@@ -265,12 +311,12 @@ subscribeToMessages: () => {
     // Clean up to prevent duplicate listeners
     socket.off("newMessage");
     socket.off("newGroupMessage");
+    socket.off("messageStatusUpdated");
+    socket.off("messagesSeen");
 
     socket.on("newMessage", (newMessage) => {
         const { selectedUser } = get();
         
-        // Logical check: Is this message for the current chat?
-        // Compare string values because mongoose ObjectIds may be objects
         const isFromSelectedUser = selectedUser &&
           String(newMessage.senderId) === String(selectedUser._id);
         
@@ -279,6 +325,9 @@ subscribeToMessages: () => {
         set((state) => ({
             messages: [...state.messages, newMessage],
         }));
+
+        // Acknowledge message delivery
+        socket.emit("messageDelivered", { messageId: newMessage._id });
     });
 
     socket.on("newGroupMessage", (newMessage) => {
@@ -292,6 +341,24 @@ subscribeToMessages: () => {
         set((state) => ({
             messages: [...state.messages, newMessage],
         }));
+    });
+
+    socket.on("messageStatusUpdated", ({ messageId, status }) => {
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          msg._id === messageId ? { ...msg, status } : msg
+        ),
+      }));
+    });
+
+    socket.on("messagesSeen", ({ conversationId }) => {
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          (msg.senderId === conversationId || msg.receiverId === conversationId)
+            ? { ...msg, status: "seen" }
+            : msg
+        ),
+      }));
     });
 
     // group membership changed
@@ -347,6 +414,8 @@ unsubscribeFromMessages: () => {
         socket.off("newGroupMessage");
         socket.off("memberAdded");
         socket.off("memberRemoved");
+        socket.off("messageStatusUpdated");
+        socket.off("messagesSeen");
     }
 },
 

@@ -5,7 +5,7 @@ import UserDetail from "./UserDetail";
 import { useChatStore } from "../Store/useChatStore";
 
 // You should also import and render your component that displays messages.
-// import MessagesList from "./MessagesList";
+import MessagesList from "./MessagesList";
 
 const MessageContainer = () => {
     const { selectedUser } = useChatStore();
@@ -26,11 +26,7 @@ const MessageContainer = () => {
         <div className="flex-1 flex flex-col relative overflow-hidden">
             <ChatHeader onHeaderClick={() => setIsDetailOpen(true)} />
 
-            {/* Your messages list would go here */}
-            <div className="flex-1 overflow-y-auto p-4 bg-base-200">
-                {/* <MessagesList /> */}
-                <p className="text-center text-base-content/60">Your chat messages will appear here.</p>
-            </div>
+            <MessagesList />
 
             <MessageInput />
 

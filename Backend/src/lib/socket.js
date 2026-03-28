@@ -25,6 +25,10 @@ export function getReceiverSocketId(userId) {
 // used to store online users
 const userSocketMap = {}; // {userId: [socketId1, socketId2, ...]}
 
+import Message from "../models/message.model.js";
+
+// ... (keep existing code until io.on)
+
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
@@ -36,8 +40,54 @@ io.on("connection", (socket) => {
     userSocketMap[userId].push(socket.id);
   }
 
-  // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("messageDelivered", async ({ messageId }) => {
+    try {
+      const message = await Message.findByIdAndUpdate(
+        messageId,
+        { status: "delivered" },
+        { new: true }
+      );
+      if (message) {
+        const senderSocketIds = getReceiverSocketId(message.senderId.toString());
+        if (senderSocketIds) {
+          senderSocketIds.forEach(socketId => {
+            io.to(socketId).emit("messageStatusUpdated", {
+              messageId: message._id,
+              status: "delivered",
+            });
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating message to delivered:", error);
+    }
+  });
+
+  socket.on("messagesSeen", async ({ conversationId, senderId }) => {
+    try {
+      await Message.updateMany(
+        {
+          $or: [
+            { senderId: senderId, receiverId: userId },
+            { senderId: userId, receiverId: senderId },
+          ],
+          status: { $ne: "seen" },
+        },
+        { status: "seen" }
+      );
+
+      const senderSocketIds = getReceiverSocketId(senderId);
+      if (senderSocketIds) {
+          senderSocketIds.forEach(socketId => {
+            io.to(socketId).emit("messagesSeen", { conversationId });
+          })
+      }
+    } catch (error) {
+      console.error("Error updating messages to seen:", error);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
