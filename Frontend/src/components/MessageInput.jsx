@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { useChatStore } from "../Store/useChatStore";
-import { Image, Send, X, FileText, Paperclip, Sticker, File, Loader2 } from "lucide-react"; // Added Loader2
+import useSendMessage from "../Store/useSendMessage";
+import { Image, X, FileText, Paperclip, Sticker, File, Loader2, Send } from "lucide-react"; // Added Loader2
 import toast from "react-hot-toast";
 import UserDetail from "./UserDetail";
 import GroupDetail from "./GroupDetail";
@@ -17,7 +18,8 @@ const MessageInput = () => {
     const menuRef = useRef(null);
     
     // Pull isSending from the store
-    const { sendMessage, sendGroupMessage, isDetailOpen, closeDetailPanel, selectedUser, selectedGroup, isSending } = useChatStore();
+    const { isDetailOpen, closeDetailPanel, selectedUser, selectedGroup } = useChatStore();
+    const { isSending, sendMessage } = useSendMessage();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -57,9 +59,7 @@ const MessageInput = () => {
         
         const type = fileData?.isImage ? "image" : (fileData ? "file" : "text");
 
-        const sendFunction = selectedGroup ? sendGroupMessage : sendMessage;
-
-        await sendFunction({ 
+        await sendMessage({ 
             text: text.trim(), 
             file: filePreview || null,
             fileName: fileData?.name || null,
@@ -165,6 +165,3 @@ const MessageInput = () => {
         </div>
     );
 };
-
-
-export default MessageInput;

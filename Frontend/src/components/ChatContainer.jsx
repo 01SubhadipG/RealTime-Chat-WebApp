@@ -87,7 +87,7 @@ const ChatContainer = () => {
                 </div>
               </div>
               
-              <div className="chat-bubble flex flex-col gap-2">
+              <div className={`chat-bubble flex flex-col gap-2 ${message.pending ? 'opacity-50' : ''}`}>
                 {selectedGroup && message.senderId !== authUser._id && (
                   <div className="text-xs font-medium text-base-content/70">
                     {selectedGroup.members.find(m => m._id === message.senderId)?.username || "Member"}
