@@ -24,7 +24,7 @@ app.use(cors({
   ],
     credentials: true,
 }));
-
+app.get("/ping", (req, res) => res.send("pong"));
 app.use("/api/auth",authRoutes);
 app.use("/api/messages",messageRoutes);
 
