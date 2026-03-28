@@ -20,8 +20,7 @@ app.use(cookieParser());
 
 app.use(cors({
     origin: [
-    "https://realtime-chat-webapp-v84l.onrender.com", 
-    "http://localhost:5173"
+    "https://realtime-chat-webapp-v84l.onrender.com"
   ],
     credentials: true,
 }));
