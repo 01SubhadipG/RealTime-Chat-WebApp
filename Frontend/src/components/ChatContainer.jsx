@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import ChatHeader from "./ChatHeader";
@@ -6,6 +6,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { FileText, Download } from "lucide-react"; 
 import assets from "../assets/assets";
+import ImageModal from "./ImageModal";
 
 const ChatContainer = () => {
   const { 
@@ -20,6 +21,7 @@ const ChatContainer = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (selectedUser) {
@@ -95,12 +97,12 @@ const ChatContainer = () => {
                 )}
 
                 {/* --- RENDER IMAGES --- */}
-                {(message.messageType === "image" || (message.file && !message.messageType)) && (
+                {message.messageType === "image" && (
                   <img 
-                    src={message.file || message.image} 
+                    src={message.file} 
                     alt="Attachment" 
                     className="sm:max-w-[200px] rounded-md mb-2 cursor-pointer hover:opacity-90 transition-opacity" 
-                    onClick={() => window.open(message.file || message.image, "_blank")}
+                    onClick={() => setSelectedImage(message.file)}
                   />
                 )}
 
@@ -114,13 +116,13 @@ const ChatContainer = () => {
                       <p className="text-sm font-medium truncate">{message.fileName || "Document"}</p>
                       {message.file && (
                         <a 
-                          href={message.file.replace("/upload/", "/upload/fl_attachment/")} 
+                          href={message.file} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          download={message.fileName || "file.pdf"}
+                          download
                           className="text-[10px] text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
                         >
-                          <Download size={12} /> DOWNLOAD
+                          <Download size={12} /> Download
                         </a>
                       )}
                     </div>
@@ -142,8 +144,7 @@ const ChatContainer = () => {
         <div ref={messageEndRef} />
       </div>
       <MessageInput />
+      <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />
     </div>
   );
 };
-
-export default ChatContainer;
