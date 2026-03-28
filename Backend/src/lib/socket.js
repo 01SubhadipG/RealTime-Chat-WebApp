@@ -81,7 +81,7 @@ io.on("connection", (socket) => {
       const senderSocketIds = getReceiverSocketId(senderId);
       if (senderSocketIds) {
           senderSocketIds.forEach(socketId => {
-            io.to(socketId).emit("messagesSeen", { conversationId });
+            io.to(socketId).emit("messagesSeen", { conversationId: userId });
           })
       }
     } catch (error) {

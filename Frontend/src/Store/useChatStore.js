@@ -351,12 +351,18 @@ subscribeToMessages: () => {
     });
 
     socket.on("messagesSeen", ({ conversationId }) => {
+      const authUser = useAuthStore.getState().authUser;
       set((state) => ({
-        messages: state.messages.map((msg) =>
-          (msg.senderId === conversationId || msg.receiverId === conversationId)
-            ? { ...msg, status: "seen" }
-            : msg
-        ),
+        messages: state.messages.map((msg) => {
+          if (
+            msg.senderId === authUser._id &&
+            msg.receiverId === conversationId &&
+            msg.status !== "seen"
+          ) {
+            return { ...msg, status: "seen" };
+          }
+          return msg;
+        }),
       }));
     });
 
