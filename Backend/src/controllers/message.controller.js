@@ -139,21 +139,26 @@ export const sendGroupMessage = async (req, res) => {
       messageType: messageType || (file ? "file" : "text"),
     });
 
-    await newMessage.save();
-
-    // Emit to all group members except sender
-    group.members.forEach(memberId => {
-      if (memberId.toString() !== senderId.toString()) {
-        const receiverSocketId = getReceiverSocketId(memberId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("newGroupMessage", newMessage);
+    // 1. EMIT TO GROUP MEMBERS IMMEDIATELY
+    const groups = await Group.findById(groupId); // We still need members list
+    if (groups) {
+      groups.members.forEach(memberId => {
+        if (memberId.toString() !== senderId.toString()) {
+          const receiverSocketId = getReceiverSocketId(memberId);
+          if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newGroupMessage", newMessage);
+          }
         }
-      }
-    });
+      });
+    }
 
+    // 2. RESPOND TO SENDER
     res.status(201).json(newMessage);
+
+    // 3. SAVE IN BACKGROUND
+    newMessage.save().catch(err => console.error("Group DB Save Error:", err));
+
   } catch (error) {
-    console.error("Error sending group message:", error);
-    res.status(500).json({ message: "Failed to send message" });
+    // ... error handling
   }
 };
