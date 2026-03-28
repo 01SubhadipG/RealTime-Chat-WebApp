@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
-import { FileText, Download } from "lucide-react"; 
+import { FileText, Download, X } from "lucide-react"; 
 import assets from "../assets/assets";
 
 
@@ -21,6 +21,7 @@ const ChatContainer = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
 
   useEffect(() => {
@@ -102,7 +103,7 @@ const ChatContainer = () => {
                     src={message.file || message.image} 
                     alt="Attachment" 
                     className="sm:max-w-[200px] rounded-md mb-2 cursor-pointer hover:opacity-90 transition-opacity" 
-                    onClick={() => window.open(message.file || message.image, "_blank")}
+                    onClick={() => setZoomedImage(message.file || message.image)}
                   />
                 )}
 
@@ -145,6 +146,26 @@ const ChatContainer = () => {
       </div>
       <MessageInput />
 
+      {/* --- ZOOMED IMAGE MODAL --- */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            onClick={() => setZoomedImage(null)}
+          >
+            <X size={32} />
+          </button>
+          <img 
+            src={zoomedImage} 
+            alt="Zoomed" 
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the image itself
+          />
+        </div>
+      )}
     </div>
   );
 };
