@@ -80,17 +80,27 @@ export const sendMessages = async (req, res) => {
       messageType: messageType || (file ? "file" : "text"),
     });
 
-    await newMessage.save();
-
+    // --- SPEED OPTIMIZATION START ---
+    
+    // 1. Emit to socket IMMEDIATELY before saving to DB
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
+    // 2. Respond to the sender IMMEDIATELY
     res.status(201).json(newMessage);
+
+    // 3. Save to DB in the background (no 'await' blocking the response)
+    newMessage.save().catch(err => console.error("DB Save Error:", err));
+
+    // --- SPEED OPTIMIZATION END ---
+
   } catch (error) {
-    console.error("Cloudinary Upload Error:", error.message);
-    res.status(500).json({ message: "Failed to send document" });
+    console.error("Error:", error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Failed to send message" });
+    }
   }
 };
 
