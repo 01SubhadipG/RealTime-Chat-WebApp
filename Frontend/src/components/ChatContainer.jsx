@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
 import ChatHeader from "./ChatHeader";
-import MessageInput from "./MessageInput";
+import { MessageInput } from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { FileText, Download } from "lucide-react"; 
 import assets from "../assets/assets";
