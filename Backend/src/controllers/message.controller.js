@@ -24,7 +24,7 @@ export const getMessages = async (req, res) => {
                 {senderId,receiverId:userToChatId},
                 {senderId:userToChatId,receiverId:senderId}
             ]
-        }).sort({createdAt:1}); // Sort messages by creation time
+        }).select("+status").sort({createdAt:1}); // Sort messages by creation time
         res.status(200).json(messages);
     }
     catch(error){
@@ -43,7 +43,7 @@ export const getGroupMessages = async (req, res) => {
             return res.status(403).json({ message: "Not authorized to view messages" });
         }
 
-        const messages = await Message.find({ groupId }).sort({ createdAt: 1 });
+        const messages = await Message.find({ groupId }).select("+status").sort({ createdAt: 1 });
         res.status(200).json(messages);
     } catch (error) {
         res.status(500).json({ message: "Server error" });
@@ -78,8 +78,8 @@ export const sendMessages = async (req, res) => {
       fileName: fileName || "attachment",
       messageType: messageType || (file ? "file" : "text"),
     });
-
-    await newMessage.save();
+    
+    newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
